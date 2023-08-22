@@ -5,7 +5,6 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import pandas as pd
-import hashlib
 
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
@@ -13,17 +12,11 @@ nltk.download('stopwords')
 url = st.text_input('Enter the URL of the article:')
 
 if url:
-    # Extract article information
     article = Article(url)
     article.download()
     article.parse()
     st.write('Title:', article.title)
     st.write('Text:', article.text)
-
-    # Save article text to file
-    url_id = hashlib.md5(url.encode()).hexdigest()
-    with open(f'{url_id}.txt', 'w') as f:
-        f.write(article.text)
 
     # Perform sentiment analysis
     stop_words = set(stopwords.words('english'))
