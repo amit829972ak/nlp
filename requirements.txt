@@ -3,6 +3,4 @@ pandas
 nltk
 Article
 requests
-streamlit_lottie 
-word_tokenize
-sent_tokenize
+streamlit_lottie
