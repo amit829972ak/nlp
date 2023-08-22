@@ -5,19 +5,37 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import pandas as pd
+import requests
+from streamlit_lottie import st_lottie
 
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
 nltk.download('punkt')
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+lottie_url_hello = "https://lottie.host/0d49d388-9acb-492c-92c2-8dad820db057/R3WmiFyHXU.json"
+
+lottie_hello = load_lottieurl(lottie_url_hello)
+st_lottie(lottie_hello)
 
 url = st.text_input('Enter the URL of the article:')
 
 if url:
+    # Extract article information
     article = Article(url)
     article.download()
     article.parse()
     st.write('Title:', article.title)
     st.write('Text:', article.text)
+
+    # Save article text to file
+    file_name = f'{article.title}.txt'
+    with open(file_name, 'w') as f:
+        f.write(article.text)
 
     # Perform sentiment analysis
     stop_words = set(stopwords.words('english'))
