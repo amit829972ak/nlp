@@ -45,8 +45,7 @@ if url:
 
     sid = SentimentIntensityAnalyzer()
     sentiment_scores = sid.polarity_scores(' '.join(tokens))
-    st.write('Sentiment scores:', sentiment_scores)
-
+    
     # Create DataFrame
     data = {'URL': [url],
             'Article Title': [article.title],
