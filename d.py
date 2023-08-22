@@ -8,6 +8,7 @@ import pandas as pd
 
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
+nltk.download('punkt')
 
 url = st.text_input('Enter the URL of the article:')
 
