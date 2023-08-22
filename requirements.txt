@@ -1,7 +1,6 @@
 streamlit
 pandas
 nltk
-io
 newspaper 
 Article
 requests
