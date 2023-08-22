@@ -4,6 +4,5 @@ nltk
 Article
 requests
 streamlit_lottie 
-stopwords
 word_tokenize
 sent_tokenize
