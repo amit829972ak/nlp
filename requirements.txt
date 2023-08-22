@@ -4,4 +4,3 @@ nltk
 Article
 requests
 streamlit_lottie
-newspaper
