@@ -96,7 +96,7 @@ def get_avg_word_length(text):
     avg_word_length = total_chars / len(words)
     return avg_word_length
 
-def open(text, pos_dict_file, neg_dict_file, stopword_file):
+def get_sentiment(text, pos_dict_file, neg_dict_file, stopword_file):
     text = clean_text(text, stopword_file)
     pos_dict = set()
     neg_dict = set()
@@ -128,7 +128,7 @@ if url:
     st.success('Article text extracted and saved successfully!')
     
     # Assuming that the functions `get_sentiment`, `get_readability`, `get_word_count`, `get_syllable_count`, `get_personal_pronouns`, and `get_avg_word_length` are defined
-    pos_score, neg_score, polarity_score, subjectivity_score = get_sentiment(text, 'positive.txt', 'negative.txt', 'stopwords.txt','r',encoding='utf-8')
+    pos_score, neg_score, polarity_score, subjectivity_score = get_sentiment(text, 'positive.txt', 'negative.txt', 'stopwords.txt')
     avg_sentence_length, percent_complex_words, fog_index, complex_word_count = get_readability(text)
     word_count = get_word_count(text)
     syllable_count_per_word = get_syllable_count(text)
