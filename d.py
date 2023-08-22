@@ -8,6 +8,8 @@ import pandas as pd
 import requests
 from streamlit_lottie import st_lottie
 
+nltk.download('vader_lexicon')
+nltk.download('stopwords')
 def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -15,8 +17,9 @@ def load_lottieurl(url: str):
     return r.json()
 
 lottie_url_hello = "https://lottie.host/0d49d388-9acb-492c-92c2-8dad820db057/R3WmiFyHXU.json"
-nltk.download('vader_lexicon')
-nltk.download('stopwords')
+
+lottie_hello = load_lottieurl(lottie_url_hello)
+st_lottie(lottie_hello)
 
 url = st.text_input('Enter the URL of the article:')
 
@@ -41,7 +44,8 @@ if url:
 
     sid = SentimentIntensityAnalyzer()
     sentiment_scores = sid.polarity_scores(' '.join(tokens))
-    
+    st.write('Sentiment scores:', sentiment_scores)
+
     # Create DataFrame
     data = {'URL': [url],
             'Article Title': [article.title],
