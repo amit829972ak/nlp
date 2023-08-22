@@ -96,7 +96,7 @@ def get_avg_word_length(text):
     avg_word_length = total_chars / len(words)
     return avg_word_length
 
-def get_sentiment(text, pos_dict_file, neg_dict_file, stopword_file):
+def open(text, pos_dict_file, neg_dict_file, stopword_file):
     text = clean_text(text, stopword_file)
     pos_dict = set()
     neg_dict = set()
