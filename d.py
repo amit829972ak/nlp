@@ -128,7 +128,7 @@ if url:
     st.success('Article text extracted and saved successfully!')
     
     # Assuming that the functions `get_sentiment`, `get_readability`, `get_word_count`, `get_syllable_count`, `get_personal_pronouns`, and `get_avg_word_length` are defined
-    pos_score, neg_score, polarity_score, subjectivity_score = get_sentiment(text, 'positive.txt', 'negative.txt', 'stopwords.txt')
+    pos_score, neg_score, polarity_score, subjectivity_score = open(text, 'positive.txt', 'negative.txt', 'stopwords.txt','r','encoding='utf-8'')
     avg_sentence_length, percent_complex_words, fog_index, complex_word_count = get_readability(text)
     word_count = get_word_count(text)
     syllable_count_per_word = get_syllable_count(text)
