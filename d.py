@@ -5,7 +5,16 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import pandas as pd
+import requests
+from streamlit_lottie import st_lottie
 
+def load_lottieurl(url: str):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+lottie_url_hello = "https://lottie.host/0d49d388-9acb-492c-92c2-8dad820db057/R3WmiFyHXU.json"
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
 
