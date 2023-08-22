@@ -1,4 +1,4 @@
-newspaper
+newspaper3k
 streamlit
 pandas
 nltk
