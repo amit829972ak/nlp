@@ -3,7 +3,8 @@ pandas
 nltk
 re
 io
-newspaper import Article
+newspaper 
+Article
 requests
 streamlit_lottie 
 st_lottie_spinner
