@@ -1,13 +1,9 @@
 streamlit
 pandas
 nltk
-newspaper
 Article
 requests
 streamlit_lottie 
-st_lottie_spinner
-nltk.corpus 
 stopwords
-nltk.tokenize 
 word_tokenize
 sent_tokenize
