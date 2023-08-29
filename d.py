@@ -57,10 +57,28 @@ if url:
     df = pd.DataFrame(data)
     st.write(df)
 # Download the extracted text of the article
+download_format = st.selectbox("Select download format", ["PDF", "Text", "DOCX"])
 download_button = st.button("Download Article Text")
 if download_button:
     with open(file_name, "r") as f:
         text = f.read()
-        b64 = base64.b64encode(text.encode()).decode()
-        href = f'<a href="data:file/txt;base64,{b64}" download="{file_name}">Download</a>'
+        if download_format == "PDF":
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", size=12)
+            pdf.multi_cell(0, 10, txt=text)
+            pdf.output(file_name + ".pdf")
+            with open(file_name + ".pdf", "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+            href = f'<a href="data:application/pdf;base64,{b64}" download="{file_name}.pdf">Download</a>'
+        elif download_format == "Text":
+            b64 = base64.b64encode(text.encode()).decode()
+            href = f'<a href="data:file/txt;base64,{b64}" download="{file_name}.txt">Download</a>'
+        elif download_format == "DOCX":
+            doc = docx.Document()
+            doc.add_paragraph(text)
+            doc.save(file_name + ".docx")
+            with open(file_name + ".docx", "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+            href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64}" download="{file_name}.docx">Download</a>'
         st.markdown(href, unsafe_allow_html=True)
