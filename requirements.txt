@@ -5,5 +5,5 @@ nltk
 Article
 requests
 streamlit_lottie
-docx
+python-docx
 FPDF
