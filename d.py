@@ -8,6 +8,9 @@ import pandas as pd
 import requests
 from streamlit_lottie import st_lottie
 import base64
+from fpdf import FPDF
+import docx
+
 
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
