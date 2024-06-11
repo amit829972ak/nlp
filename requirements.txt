@@ -1,8 +1,8 @@
 newspaper3k
+Article
 streamlit
 pandas
 nltk
-Article
 requests
 streamlit_lottie
 python-docx
