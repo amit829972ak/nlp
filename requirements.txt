@@ -1,5 +1,4 @@
 newspaper3k
-Article
 streamlit
 pandas
 nltk
