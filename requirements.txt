@@ -6,3 +6,4 @@ requests
 streamlit_lottie
 python-docx
 FPDF
+lxml_html_clean
