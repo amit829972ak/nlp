@@ -12,7 +12,12 @@ from fpdf import FPDF
 import docx
 import os
 
-# Download required NLTK data
+# Set up local nltk_data path
+nltk_data_dir = os.path.join(os.path.dirname(__file__), "nltk_data")
+os.makedirs(nltk_data_dir, exist_ok=True)
+nltk.data.path.append(nltk_data_dir)
+
+# Download required NLTK data to local path
 def download_nltk_data():
     required_nltk_data = [
         'vader_lexicon',
@@ -24,7 +29,7 @@ def download_nltk_data():
     
     for resource in required_nltk_data:
         try:
-            nltk.download(resource)
+            nltk.download(resource, download_dir=nltk_data_dir)
         except Exception as e:
             st.error(f"Error downloading NLTK resource {resource}: {str(e)}")
             return False
@@ -35,6 +40,7 @@ if not download_nltk_data():
     st.error("Failed to download required NLTK data. Please check your internet connection and try again.")
     st.stop()
 
+# Load Lottie animation from URL
 def load_lottieurl(url: str):
     try:
         r = requests.get(url)
@@ -45,15 +51,15 @@ def load_lottieurl(url: str):
         st.error(f"Error loading Lottie animation: {str(e)}")
         return None
 
-# Load Lottie animation
+# Display animation
 lottie_url_hello = "https://lottie.host/0d49d388-9acb-492c-92c2-8dad820db057/R3WmiFyHXU.json"
 lottie_hello = load_lottieurl(lottie_url_hello)
 if lottie_hello:
     st_lottie(lottie_hello)
 
-# Main app interface
-st.title("Article Analysis Tool")
-url = st.text_input('Enter the URL of the article:')
+# Streamlit UI
+st.title("📰 Article Analysis Tool")
+url = st.text_input('🔗 Enter the URL of the article:')
 
 if url:
     try:
@@ -63,10 +69,13 @@ if url:
         article.parse()
         
         if not article.text:
-            st.error("Could not extract text from the article. Please check the URL and try again.")
+            st.error("❌ Could not extract text from the article. Please check the URL and try again.")
         else:
-            st.write('Title:', article.title)
-            st.write('Text:', article.text)
+            st.subheader("📄 Article Title")
+            st.write(article.title)
+
+            st.subheader("📝 Article Text")
+            st.write(article.text)
 
             # Save article text to file
             file_name = f'{article.title}.txt'
@@ -74,14 +83,14 @@ if url:
                 with open(file_name, 'w', encoding='utf-8') as f:
                     f.write(article.text)
             except Exception as e:
-                st.error(f"Error saving article text: {str(e)}")
+                st.error(f"⚠️ Error saving article text: {str(e)}")
 
             # Perform sentiment analysis
             try:
                 stop_words = set(stopwords.words('english'))
                 tokens = word_tokenize(article.text)
                 tokens = [word for word in tokens if word.isalpha()]
-                tokens = [word for word in tokens if not word in stop_words]
+                tokens = [word for word in tokens if word.lower() not in stop_words]
 
                 sid = SentimentIntensityAnalyzer()
                 sentiment_scores = sid.polarity_scores(' '.join(tokens))
@@ -96,11 +105,12 @@ if url:
                     'Subjectivity Score': [sentiment_scores['pos'] + sentiment_scores['neg']]
                 }
                 df = pd.DataFrame(data)
-                st.write(df)
+                st.subheader("📊 Sentiment Analysis")
+                st.dataframe(df)
 
                 # Download options
-                download_format = st.selectbox("Select download format", ["PDF", "Text", "DOCX"])
-                download_button = st.button("Download Article Text")
+                download_format = st.selectbox("💾 Select download format", ["PDF", "Text", "DOCX"])
+                download_button = st.button("⬇️ Download Article Text")
 
                 if download_button:
                     try:
@@ -114,23 +124,23 @@ if url:
                                 pdf.output(file_name + ".pdf")
                                 with open(file_name + ".pdf", "rb") as f:
                                     b64 = base64.b64encode(f.read()).decode()
-                                href = f'<a href="data:application/pdf;base64,{b64}" download="{file_name}.pdf">Download</a>'
+                                href = f'<a href="data:application/pdf;base64,{b64}" download="{file_name}.pdf">Download PDF</a>'
                             elif download_format == "Text":
                                 b64 = base64.b64encode(text.encode()).decode()
-                                href = f'<a href="data:file/txt;base64,{b64}" download="{file_name}.txt">Download</a>'
+                                href = f'<a href="data:file/txt;base64,{b64}" download="{file_name}.txt">Download Text</a>'
                             elif download_format == "DOCX":
                                 doc = docx.Document()
                                 doc.add_paragraph(text)
                                 doc.save(file_name + ".docx")
                                 with open(file_name + ".docx", "rb") as f:
                                     b64 = base64.b64encode(f.read()).decode()
-                                href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64}" download="{file_name}.docx">Download</a>'
+                                href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64}" download="{file_name}.docx">Download DOCX</a>'
                             st.markdown(href, unsafe_allow_html=True)
                     except Exception as e:
-                        st.error(f"Error during download: {str(e)}")
+                        st.error(f"❌ Error during download: {str(e)}")
             except Exception as e:
-                st.error(f"Error during sentiment analysis: {str(e)}")
+                st.error(f"❌ Error during sentiment analysis: {str(e)}")
 
     except Exception as e:
-        st.error(f"Error processing article: {str(e)}")
+        st.error(f"❌ Error processing article: {str(e)}")
         st.error("Please check the URL and try again.")
