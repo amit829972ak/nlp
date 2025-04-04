@@ -8,5 +8,4 @@ streamlit_lottie
 python-docx
 FPDF
 lxml_html_clean
-pip-25.0.1
 
