@@ -11,27 +11,45 @@ import base64
 from fpdf import FPDF
 import docx
 import os
+import shutil
 
-# Create a directory for NLTK data
+# Set up NLTK data directory
 nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
+
+# Create directory if it doesn't exist
 os.makedirs(nltk_data_dir, exist_ok=True)
 
-# Add the directory to NLTK's data path
+# Add to NLTK's data path
 nltk.data.path.append(nltk_data_dir)
 
-# Download NLTK data safely
-def download_nltk_data(package, directory):
+# Function to safely download NLTK data, with error handling specifically for FileExistsError
+def safe_nltk_download(package):
     try:
-        nltk.data.find(f'{package}')
-        print(f"NLTK data '{package}' already exists.")
-    except LookupError:
-        print(f"Downloading NLTK data '{package}'...")
-        nltk.download(package, download_dir=directory, quiet=True)
+        # First check if the data is already available
+        try:
+            nltk.data.find(f'{package}')
+            st.write(f"NLTK data '{package}' is already available.")
+            return True
+        except LookupError:
+            # Data needs to be downloaded
+            pass
+            
+        # Try downloading, catching potential FileExistsError
+        try:
+            nltk.download(package, quiet=True)
+            return True
+        except FileExistsError:
+            # If directory exists but data is incomplete/corrupt, try forcing a fresh download
+            st.write(f"NLTK data directory for '{package}' already exists but may be incomplete. Using existing data.")
+            return True
+    except Exception as e:
+        st.write(f"Warning: Could not download NLTK data '{package}': {str(e)}")
+        return False
 
-# Download required NLTK data
-download_nltk_data('vader_lexicon', nltk_data_dir)
-download_nltk_data('stopwords', nltk_data_dir)
-download_nltk_data('punkt', nltk_data_dir)
+# Try to download required NLTK data
+safe_nltk_download('vader_lexicon')
+safe_nltk_download('stopwords')
+safe_nltk_download('punkt')
 
 # Set up page config
 st.set_page_config(
