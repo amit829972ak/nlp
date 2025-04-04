@@ -2,6 +2,7 @@ newspaper3k
 streamlit
 pandas
 nltk
+NLTK Downloader
 requests
 streamlit_lottie
 python-docx
