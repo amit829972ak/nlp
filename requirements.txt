@@ -7,7 +7,6 @@ requests
 streamlit_lottie
 python-docx
 FPDF
-pip==25.0.1
 lxml_html_clean
-pip install --upgrade pip
+
 
