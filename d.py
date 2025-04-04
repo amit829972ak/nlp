@@ -10,6 +10,7 @@ from streamlit_lottie import st_lottie
 import base64
 from fpdf import FPDF
 import docx
+
 nltk.download('vader_lexicon')
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -18,10 +19,14 @@ def load_lottieurl(url: str):
     if r.status_code != 200:
         return None
     return r.json()
+
 lottie_url_hello = "https://lottie.host/0d49d388-9acb-492c-92c2-8dad820db057/R3WmiFyHXU.json"
+
 lottie_hello = load_lottieurl(lottie_url_hello)
 st_lottie(lottie_hello)
+
 url = st.text_input('Enter the URL of the article:')
+
 if url:
     # Extract article information
     article = Article(url)
@@ -29,17 +34,21 @@ if url:
     article.parse()
     st.write('Title:', article.title)
     st.write('Text:', article.text)
+
     # Save article text to file
     file_name = f'{article.title}.txt'
-    with open(file_name, 'w') as f:
+    with open(file_name, 'w', encoding='utf-8') as f:
         f.write(article.text)
+
     # Perform sentiment analysis
     stop_words = set(stopwords.words('english'))
     tokens = word_tokenize(article.text)
     tokens = [word for word in tokens if word.isalpha()]
     tokens = [word for word in tokens if not word in stop_words]
+
     sid = SentimentIntensityAnalyzer()
     sentiment_scores = sid.polarity_scores(' '.join(tokens))
+
     # Create DataFrame
     data = {'URL': [url],
             'Article Title': [article.title],
@@ -50,8 +59,10 @@ if url:
     df = pd.DataFrame(data)
     st.write(df)
 # Download the extracted text of the article
+
 download_format = st.selectbox("Select download format", ["PDF", "Text", "DOCX"])
 download_button = st.button("Download Article Text")
+
 if download_button:
     with open(file_name, "r") as f:
         text = f.read()
