@@ -16,13 +16,22 @@ import os
 nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
 os.makedirs(nltk_data_dir, exist_ok=True)
 
-# Download NLTK data to the specified directory
-nltk.download('vader_lexicon', download_dir=nltk_data_dir)
-nltk.download('stopwords', download_dir=nltk_data_dir)
-nltk.download('punkt', download_dir=nltk_data_dir)
-
 # Add the directory to NLTK's data path
 nltk.data.path.append(nltk_data_dir)
+
+# Download NLTK data safely
+def download_nltk_data(package, directory):
+    try:
+        nltk.data.find(f'{package}')
+        print(f"NLTK data '{package}' already exists.")
+    except LookupError:
+        print(f"Downloading NLTK data '{package}'...")
+        nltk.download(package, download_dir=directory, quiet=True)
+
+# Download required NLTK data
+download_nltk_data('vader_lexicon', nltk_data_dir)
+download_nltk_data('stopwords', nltk_data_dir)
+download_nltk_data('punkt', nltk_data_dir)
 
 # Set up page config
 st.set_page_config(
