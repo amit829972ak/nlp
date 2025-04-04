@@ -1,200 +1,166 @@
 import streamlit as st
-import nltk
-from newspaper import Article
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 import pandas as pd
+import nltk
+import re
+import io
+from newspaper import Article
 import requests
 from streamlit_lottie import st_lottie
-import base64
-from fpdf import FPDF
-import docx
-import os
+from streamlit_lottie import st_lottie_spinner
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+buffer = io.BytesIO()
 
-# Create a directory for NLTK data
-nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
-os.makedirs(nltk_data_dir, exist_ok=True)
 
-# Download NLTK data to the specified directory
-nltk.download('vader_lexicon', download_dir=nltk_data_dir)
-nltk.download('stopwords', download_dir=nltk_data_dir)
-nltk.download('punkt', download_dir=nltk_data_dir)
+nltk.download('punkt')
+nltk.download('stopwords')
 
-# Add the directory to NLTK's data path
-nltk.data.path.append(nltk_data_dir)
-
-# Set up page config
-st.set_page_config(
-    page_title="Article Sentiment Analyzer",
-    page_icon="📰",
-    layout="wide"
-)
-
-# Function to load Lottie animations
 def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
-# App title and description
-st.title("📰 Article Sentiment Analyzer")
-st.markdown("""
-    This app extracts text from online articles and performs sentiment analysis.
-    Enter a URL below to get started!
-""")
+lottie_url_hello = "https://lottie.host/0d49d388-9acb-492c-92c2-8dad820db057/R3WmiFyHXU.json"
 
-# Display animation
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    lottie_url_hello = "https://lottie.host/0d49d388-9acb-492c-92c2-8dad820db057/R3WmiFyHXU.json"
-    lottie_hello = load_lottieurl(lottie_url_hello)
-    st_lottie(lottie_hello, height=200)
+lottie_hello = load_lottieurl(lottie_url_hello)
+st_lottie(lottie_hello)
+def get_article_text(url):
+    article = Article(url)
+    article.download()
+    article.parse()
+    return article.title, article.text
 
-# URL input
-url = st.text_input('Enter the URL of the article:')
+def clean_text(text, stopword_file):
+    stop_words = set(stopwords.words('english'))
+    with open(stopword_file, 'r') as f:
+        for line in f:
+            stop_words.add(line.strip())
+    word_tokens = word_tokenize(text)
+    filtered_text = [w for w in word_tokens if not w in stop_words]
+    return filtered_text
 
-# Function to safely create file name
-def create_safe_filename(title):
-    # Replace invalid characters
-    invalid_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
-    for char in invalid_chars:
-        title = title.replace(char, '')
-    # Limit length
-    return title[:50] if title else "article"
+def is_complex(word):
+    if len(word) > 7:
+        return True
+    else:
+        return False
 
-# Main process when URL is provided
+def get_readability(text):
+    sentences = sent_tokenize(text)
+    words = word_tokenize(text)
+    avg_sentence_length = len(words) / len(sentences)
+    complex_words = [w for w in words if is_complex(w)]
+    percent_complex_words = len(complex_words) / len(words) * 100
+    fog_index = 0.4 * (avg_sentence_length + percent_complex_words)
+    return avg_sentence_length, percent_complex_words, fog_index, len(complex_words)
+
+def get_word_count(text):
+    words = word_tokenize(text)
+    words = [w for w in words if w.isalpha()]
+    return len(words)
+
+def count_syllables(word):
+    vowels = "aeiouy"
+    word = word.lower()
+    if word[0] in vowels:
+        count = 1
+    else:
+        count = 0
+    for i in range(1, len(word)):
+        if word[i] in vowels and word[i - 1] not in vowels:
+            count += 1
+    if word.endswith("e"):
+        count -= 1
+    if word.endswith("le") and len(word) > 2 and word[-3] not in vowels:
+        count += 1
+    if count == 0:
+        count += 1
+    return count
+
+def get_syllable_count(text):
+    words = word_tokenize(text)
+    syllable_count = [count_syllables(w) for w in words]
+    return syllable_count
+
+def get_personal_pronouns(text):
+    pattern = r'\b[Ii]|[Ww]e|[Mm]y|[Oo]urs|[Uu]s\b'
+    personal_pronouns = re.findall(pattern, text)
+    personal_pronouns = [w for w in personal_pronouns if w.lower() != 'us']
+    return len(personal_pronouns)
+
+def get_avg_word_length(text):
+    words = word_tokenize(text)
+    words = [w for w in words if w.isalpha()]
+    total_chars = sum([len(w) for w in words])
+    avg_word_length = total_chars / len(words)
+    return avg_word_length
+
+def get_sentiment(text, pos_dict_file, neg_dict_file, stopword_file):
+    text = clean_text(text, stopword_file)
+    pos_dict = set()
+    neg_dict = set()
+    with open(pos_dict_file, 'r') as f:
+        for line in f:
+            pos_dict.add(line.strip())
+    with open(neg_dict_file, 'r') as f:
+        for line in f:
+            neg_dict.add(line.strip())
+    pos_score = sum([1 for word in text if word in pos_dict])
+    neg_score = sum([-1 for word in text if word in neg_dict]) * -1
+    polarity_score = (pos_score - neg_score) / ((pos_score + neg_score) + 0.000001)
+    subjectivity_score = (pos_score + neg_score) / (len(text) + 0.000001)
+    return pos_score, neg_score, polarity_score, subjectivity_score
+
+
+st.title('Sentiment Analysis')
+
+url = st.text_input('Enter URL:')
 if url:
-    try:
-        with st.spinner('Extracting article...'):
-            # Extract article information
-            article = Article(url)
-            article.download()
-            article.parse()
-            
-            # Create safe filename
-            safe_title = create_safe_filename(article.title)
-            file_name = f'{safe_title}.txt'
-            
-            # Display article info in expandable sections
-            with st.expander("Article Title"):
-                st.subheader(article.title)
-            
-            with st.expander("Article Text"):
-                st.write(article.text)
-            
-            # Save article text to file
-            with open(file_name, 'w', encoding='utf-8') as f:
-                f.write(article.text)
-            
-            # Perform sentiment analysis
-            with st.spinner('Analyzing sentiment...'):
-                stop_words = set(stopwords.words('english'))
-                tokens = word_tokenize(article.text.lower())
-                tokens = [word for word in tokens if word.isalpha()]
-                tokens = [word for word in tokens if word not in stop_words]
-                
-                sid = SentimentIntensityAnalyzer()
-                sentiment_scores = sid.polarity_scores(' '.join(tokens))
-                
-                # Calculate overall sentiment
-                if sentiment_scores['compound'] >= 0.05:
-                    overall_sentiment = "Positive"
-                elif sentiment_scores['compound'] <= -0.05:
-                    overall_sentiment = "Negative"
-                else:
-                    overall_sentiment = "Neutral"
-                
-                # Create DataFrame
-                data = {
-                    'URL': [url],
-                    'Article Title': [article.title],
-                    'Positive Score': [sentiment_scores['pos']],
-                    'Negative Score': [sentiment_scores['neg']],
-                    'Neutral Score': [sentiment_scores['neu']],
-                    'Compound Score': [sentiment_scores['compound']],
-                    'Overall Sentiment': [overall_sentiment]
-                }
-                df = pd.DataFrame(data)
-            
-            # Display sentiment analysis results
-            st.subheader("Sentiment Analysis Results")
-            st.dataframe(df)
-            
-            # Visualize sentiment scores
-            st.subheader("Sentiment Score Distribution")
-            sentiment_data = {
-                'Sentiment': ['Positive', 'Neutral', 'Negative'],
-                'Score': [sentiment_scores['pos'], sentiment_scores['neu'], sentiment_scores['neg']]
-            }
-            chart_data = pd.DataFrame(sentiment_data)
-            st.bar_chart(chart_data.set_index('Sentiment'))
-            
-            # Download section
-            st.subheader("Download Article")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                download_format = st.selectbox("Select download format", ["PDF", "Text", "DOCX"])
-            
-            with col2:
-                download_button = st.button("Generate Download Link")
-            
-            if download_button:
-                with st.spinner('Preparing download...'):
-                    with open(file_name, "r", encoding='utf-8') as f:
-                        text = f.read()
-                        
-                        if download_format == "PDF":
-                            pdf = FPDF()
-                            pdf.add_page()
-                            pdf.set_font("Arial", size=12)
-                            
-                            # Handle encoding issues by splitting text into smaller chunks
-                            # and removing non-Latin characters
-                            chunks = [text[i:i+100] for i in range(0, len(text), 100)]
-                            for chunk in chunks:
-                                try:
-                                    pdf.multi_cell(0, 10, txt=chunk)
-                                except Exception:
-                                    # If a chunk causes an error, try to clean it
-                                    clean_chunk = ''.join(c if ord(c) < 128 else ' ' for c in chunk)
-                                    pdf.multi_cell(0, 10, txt=clean_chunk)
-                            
-                            pdf_filename = f"{safe_title}.pdf"
-                            pdf.output(pdf_filename)
-                            
-                            with open(pdf_filename, "rb") as f:
-                                b64 = base64.b64encode(f.read()).decode()
-                            href = f'<a href="data:application/pdf;base64,{b64}" download="{pdf_filename}">Download PDF</a>'
-                        
-                        elif download_format == "Text":
-                            b64 = base64.b64encode(text.encode('utf-8')).decode()
-                            href = f'<a href="data:file/txt;base64,{b64}" download="{file_name}">Download Text</a>'
-                        
-                        elif download_format == "DOCX":
-                            doc = docx.Document()
-                            doc.add_paragraph(text)
-                            docx_filename = f"{safe_title}.docx"
-                            doc.save(docx_filename)
-                            
-                            with open(docx_filename, "rb") as f:
-                                b64 = base64.b64encode(f.read()).decode()
-                            href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64}" download="{docx_filename}">Download DOCX</a>'
-                        
-                        st.markdown(href, unsafe_allow_html=True)
+    article = Article(url)
+    article.download()
+    article.parse()
+    text = article.text
+    title = article.title
+    with open("article.txt", "w", encoding="utf-8") as f:
+        f.write(title + "\n\n" + text)
+     
+    st.success('Article text extracted and saved successfully!')
     
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-        st.info("Please check if the URL is valid and accessible. If using Streamlit Cloud, make sure all dependencies are properly installed.")
+    # Assuming that the functions `get_sentiment`, `get_readability`, `get_word_count`, `get_syllable_count`, `get_personal_pronouns`, and `get_avg_word_length` are defined
+    pos_score, neg_score, polarity_score, subjectivity_score = get_sentiment(text, 'positive.txt', 'negative.txt', 'stopwords.txt')
+    avg_sentence_length, percent_complex_words, fog_index, complex_word_count = get_readability(text)
+    word_count = get_word_count(text)
+    syllable_count_per_word = get_syllable_count(text)
+    personal_pronouns_count = get_personal_pronouns(text)
+    avg_word_length = get_avg_word_length(text)
+    
+    result = {
+        'URL': url,
+        'POSITIVE SCORE': pos_score,
+        'NEGATIVE SCORE': neg_score,
+        'POLARITY SCORE': polarity_score,
+        'SUBJECTIVITY SCORE': subjectivity_score,
+        'AVERAGE SENTENCE LENGTH': avg_sentence_length,
+        'PERCENTAGE OF COMPLEX WORDS': percent_complex_words,
+        'FOG INDEX': fog_index,
+        'AVERAGE NUMBER OF WORDS PER SENTENCE': avg_sentence_length,
+        'COMPLEX WORD COUNT': complex_word_count,
+        'WORD COUNT': word_count,
+        'SYLLABEL COUNT PER WORD': syllable_count_per_word,
+        'PERSONAL PRONOUNS COUNT': personal_pronouns_count,
+        'AVERAGE WORD LENGTH': avg_word_length
+    }
+    
+    result_df = pd.DataFrame([result])
+    st.write(result_df)
+    
+    with pd.ExcelWriter('result.xlsx', engine='xlsxwriter') as writer:
+        result_df.to_excel(writer, sheet_name='Sheet1', index=False)
 
-# Add additional information at the bottom
-st.markdown("---")
-st.markdown("""
-    **About this app:**
-    
-    This application extracts text from online articles using the newspaper3k library and performs sentiment analysis using NLTK's VADER sentiment analyzer.
-    
-    The sentiment scores range from 0 to 1, where higher numbers indicate stronger sentiment. The compound score is a normalized score that summarizes the overall sentiment.
-""")
+download_button = st.download_button(
+    label="Download data as Excel",
+    data='result.xlsx',
+    file_name='result.xlsx',
+    mime='application/vnd.ms-excel'     
+)
