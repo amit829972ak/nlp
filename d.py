@@ -13,12 +13,27 @@ import docx
 import os
 
 # Download required NLTK data
-try:
-    nltk.download('vader_lexicon')
-    nltk.download('stopwords')
-    nltk.download('punkt')
-except Exception as e:
-    st.error(f"Error downloading NLTK data: {str(e)}")
+def download_nltk_data():
+    required_nltk_data = [
+        'vader_lexicon',
+        'stopwords',
+        'punkt',
+        'averaged_perceptron_tagger',
+        'wordnet'
+    ]
+    
+    for resource in required_nltk_data:
+        try:
+            nltk.download(resource)
+        except Exception as e:
+            st.error(f"Error downloading NLTK resource {resource}: {str(e)}")
+            return False
+    return True
+
+# Initialize NLTK data
+if not download_nltk_data():
+    st.error("Failed to download required NLTK data. Please check your internet connection and try again.")
+    st.stop()
 
 def load_lottieurl(url: str):
     try:
